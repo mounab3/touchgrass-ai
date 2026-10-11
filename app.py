@@ -1,6 +1,6 @@
 
 import os
-
+import traceback 
 import gradio as gr
 import requests
 from dotenv import load_dotenv
@@ -173,12 +173,10 @@ Instructions:
 
         return f"{mission}\n\n---\n🌦️ **Weather used:** {weather}"
 
-    except Exception as error:
-        print(f"Mission generation failed: {error}")
-        return (
-            "⚠️ I couldn't generate your mission. "
-            "Please check the technical error in your terminal."
-        )
+    except Exception as e:
+        print(f"Mission generation failed: {e!r}", flush=True)
+        traceback.print_exc()
+        # Keep your existing return statement below
 
 
 with gr.Blocks(title="TouchGrass AI") as demo:
