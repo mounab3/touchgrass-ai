@@ -10,19 +10,23 @@
 
 <br>
 
+<a href="https://touchgrass-ai-w61h.onrender.com">
+  <img src="https://img.shields.io/badge/☀️_TRY_THE_LIVE_DEMO-245C36?style=for-the-badge&logo=render&logoColor=white" alt="Try the live demo">
+</a>
 <a href="https://github.com/mounab3/touchgrass-ai">
-  <img src="https://img.shields.io/badge/🌿_EXPLORE_THE_CODE-245C36?style=for-the-badge" alt="Explore the code">
+  <img src="https://img.shields.io/badge/🌿_EXPLORE_THE_CODE-3C8D5A?style=for-the-badge&logo=github&logoColor=white" alt="Explore the code">
 </a>
 <a href="#-how-it-works">
-  <img src="https://img.shields.io/badge/☀️_HOW_IT_WORKS-D8F3A5?style=for-the-badge&labelColor=245C36" alt="How it works">
+  <img src="https://img.shields.io/badge/🍃_HOW_IT_WORKS-D8F3A5?style=for-the-badge&labelColor=245C36" alt="How it works">
 </a>
 
-<br>
+<br><br>
 
 <img src="https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python">
 <img src="https://img.shields.io/badge/Gradio-FFB86B?style=flat-square&logo=gradio&logoColor=222222" alt="Gradio">
 <img src="https://img.shields.io/badge/Open--Weight_AI-245C36?style=flat-square&logoColor=white" alt="Open-weight AI">
-<img src="https://img.shields.io/badge/Weather-Live-79BCE8?style=flat-square" alt="Live weather">
+<img src="https://img.shields.io/badge/Weather-Open--Meteo-79BCE8?style=flat-square" alt="Open-Meteo">
+<img src="https://img.shields.io/badge/Deployed_on-Render-46E3B7?style=flat-square&logo=render&logoColor=222222" alt="Deployed on Render">
 
 </div>
 
@@ -32,7 +36,7 @@
 
 > 🍃 **A little fresh air can change your whole day.**
 >
-> What if AI didn't just keep us on our screens, but helped us step away from them?
+
 
 </div>
 
@@ -40,33 +44,40 @@
 
 TouchGrass AI is a small AI-powered project with one simple mission: **help people spend less time scrolling and more time experiencing the real world.**
 
-Tell it your city, how much time you have, your energy level, and what you enjoy. It checks the current weather and uses AI to suggest a personalized outdoor mission that fits your day🌳
+Tell it your city, how much time you have, your energy level, and what you enjoy. It retrieves current weather information and uses AI to suggest a personalized outdoor mission that fits your day. 🌳
+
+## ☀️ Try the Live Demo
+
+🌐 **Website:** [Open TouchGrass AI](https://touchgrass-ai-w61h.onrender.com)
+
+The application is deployed on **Render**, making it accessible through a public link without requiring visitors to clone the repository or install anything.
+
 
 ## 🌱 How it works
 
 <div align="center">
 
-| 🍀 You tell  | 🌤️ It checks | 🌻 You get |
+| 🍀 You tell | 🌤️ It checks | 🌻 You get |
 |:---:|:---:|:---:|
-| Your city, time, energy & interests | Current weather conditions | A personalized outdoor mission |
+| Your city, time, energy and interests | Current weather conditions | A personalized outdoor mission |
 
 </div>
 
 ### ✨ Features
 
-- 🌍 **Your location:** Enter your city to get weather information for your area.
+- 🌍 **Your location:** Enter your city to retrieve weather information for your area.
 - 🌦️ **Live weather:** Fetch current weather data using the Open-Meteo API.
 - 🧠 **AI-generated missions:** Receive creative activity ideas tailored to your preferences.
 - ⏳ **Time-friendly suggestions:** Find something to do even when you only have a few minutes.
 - 🔋 **Energy-aware ideas:** Get suggestions that suit how energetic or relaxed you feel.
-- 🎨 **Simple, interactive interface:** Enter your preferences and discover your next mission.
+- 🎨 **Interactive interface:** Enter your preferences and discover your next mission.
 - 🌧️ **Weather-conscious suggestions:** Unfavorable conditions can prompt safer alternatives.
 
-## 🍃 A little preview
+## 🍃 A Little Preview
 
 <div align="center">
 
-<!-- Add your screenshots to the screenshots/ folder using these filenames. -->
+<!-- Add these screenshots to the screenshots/ folder to display them here. -->
 
 <img src="screenshots/touchgrass-home.png" alt="TouchGrass AI home screen" width="85%">
 
@@ -80,9 +91,7 @@ Tell it your city, how much time you have, your energy level, and what you enjoy
 
 </div>
 
-
-
-## 🌳 The technology
+## 🌳 The Technology
 
 <div align="center">
 
@@ -90,25 +99,24 @@ Tell it your city, how much time you have, your energy level, and what you enjoy
 |:---|:---|
 | 🐍 **Python** | Application logic and data processing |
 | 🎨 **Gradio** | Interactive web interface |
-| 🌤️ **Open-Meteo API** | Current weather information |
+| 🌤️ **Open-Meteo API** | City geocoding and current weather information |
 | 🤖 **OpenRouter API** | Connects the app to the selected AI model |
 | 🌿 **NVIDIA Nemotron 3 Ultra** | Generates personalized outdoor activity suggestions |
-| 🔐 **python-dotenv** | Loads configuration and API keys from environment variables |
+| 🔐 **python-dotenv** | Loads local configuration and API keys from environment variables |
+| 🚀 **Render** | Hosts the public web application |
 
 </div>
 
-### 💚 Why open-weight AI?
+### 💚 Why Open-Weight AI?
 
 TouchGrass AI explores how open-weight models can be used to create practical applications that encourage healthier relationships with technology.
 
 Instead of building another tool designed to keep people scrolling, this project uses AI to help turn a few preferences into a reason to go outside.
 
-**The goal is simple: use technology as a bridge to the real world, not a replacement for it.**
 
+## 🚀 Get Started
 
-## 🚀 Get started
-
-Want to grow your own copy of TouchGrass AI? Follow these steps.
+Want to explore or run your own copy of TouchGrass AI? Follow these steps.
 
 ### 1. 🌱 Clone the repository
 
@@ -152,29 +160,29 @@ Replace `your_api_key_here` with your own OpenRouter API key.
 python app.py
 ```
 
-Open the local URL shown in your terminal, usually:
+Open the local URL displayed in your terminal, usually:
 
-`http://127.0.0.1:7860`
+[http://127.0.0.1:7860](http://127.0.0.1:7860)
 
 That's it! You're ready to generate your first outdoor mission. 🌻
 
-## 🗺️ Project structure
+## 🗺️ Project Structure
 
 ```text
 touchgrass-ai/
 │
-├── app.py              # Main application
+├── app.py              # Main application and AI logic
 ├── requirements.txt    # Python dependencies
-├── .env                # Private API key (not committed)
+├── .env                # Private API key (local only)
 ├── .gitignore          # Files Git should ignore
-├── README.md           # You are here! 🌿
+├── README.md           # Project documentation
 │
-└── screenshots/        # App screenshots
+└── screenshots/        # Optional app screenshots
     ├── touchgrass-home.png
     └── touchgrass-mission.png
 ```
 
-## 🌻 What's next?
+## 🌻 What's Next?
 
 TouchGrass AI is a learning project, and there is plenty of room to grow!
 
@@ -183,6 +191,7 @@ TouchGrass AI is a learning project, and there is plenty of room to grow!
 - [ ] 📱 Make the interface even friendlier on mobile.
 - [ ] 🌞 Test the app with more users and different weather conditions.
 - [ ] 🌳 Add more ways to encourage small, screen-free adventures.
+- [ ] 🌦️ Improve resilience when external APIs are temporarily unavailable.
 
 ## 🤝 Contributing
 
@@ -199,8 +208,9 @@ You're welcome to explore the code, suggest improvements, or open an issue. Smal
 
 I built TouchGrass AI as part of my journey exploring open-source AI and practical software development.
 
-I wanted to experiment with a different use of AI.
-🌿
+I wanted to experiment with a different use of AI: creating something that encourages people to disconnect from their screens and reconnect with the world around them.
+
+🌿 Every small step outside counts.
 
 ---
 
@@ -209,5 +219,7 @@ I wanted to experiment with a different use of AI.
 ### 🌞 Made with curiosity, code, and a little love for the outdoors.
 
 **TouchGrass AI · Less scrolling. More exploring.** 🍃
+
+[☀️ Try the Live Demo](https://touchgrass-ai-w61h.onrender.com) · [🌿 View the Source Code](https://github.com/mounab3/touchgrass-ai)
 
 </div>
