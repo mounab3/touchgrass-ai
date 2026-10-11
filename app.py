@@ -1,17 +1,23 @@
 
-import os
-import traceback 
-import gradio as gr
-import requests
-from dotenv import load_dotenv
-from openai import OpenAI
+# Import modules for environment settings, caching, logging, web requests, and the app.
+import os  # Reads environment variables such as the API key and server port.
+import time  # Tracks cache age and pauses before retrying a rate-limited request.
+import traceback  # Prints detailed errors to the terminal for debugging.
+import gradio as gr  # Builds the web interface.
+import requests  # Sends HTTP requests to Open-Meteo.
+from dotenv import load_dotenv  # Loads private settings from the local .env file.
+from openai import OpenAI  # Connects to OpenRouter using the OpenAI-compatible API.
 
+# Load environment variables from .env when running locally.
 load_dotenv()
 
-
+# Read the API key privately; configure the same variable in Render's Environment settings.
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+
+# Select the open-weight AI model used to generate missions through OpenRouter.
 MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free"
 
+# Create the AI client only when an API key is available.
 client = None
 if OPENROUTER_API_KEY:
     client = OpenAI(
@@ -20,37 +26,80 @@ if OPENROUTER_API_KEY:
     )
 
 
+# Store successful weather results in memory for 10 minutes.
+_weather_cache = {}
+WEATHER_CACHE_SECONDS = 600
+
+
 def get_weather(city):
     """Find a city and retrieve its current weather from Open-Meteo."""
 
-    geocoding_url = "https://geocoding-api.open-meteo.com/v1/search"
+    # Normalize the city name for caching and remove extra spaces.
+    city = city.strip()
+    cache_key = city.casefold()
 
-    geocoding_response = requests.get(
+    # Reuse recent weather data instead of sending repeated requests.
+    cached = _weather_cache.get(cache_key)
+    if cached and time.time() - cached["time"] < WEATHER_CACHE_SECONDS:
+        print(f"Using cached weather for {city}", flush=True)
+        return cached["summary"]
+
+    def fetch_json(url, params):
+        """Request JSON data and retry once after a rate-limit response."""
+
+        # Allow at most two attempts so a temporary 429 can recover.
+        for attempt in range(2):
+            response = requests.get(url, params=params, timeout=15)
+
+            # Wait briefly before retrying when Open-Meteo limits requests.
+            if response.status_code == 429 and attempt == 0:
+                retry_after = response.headers.get("Retry-After", "2")
+
+                try:
+                    delay = min(max(float(retry_after), 1), 5)
+                except ValueError:
+                    delay = 2
+
+                print(
+                    f"Open-Meteo rate limit reached; retrying in {delay} seconds.",
+                    flush=True,
+                )
+                time.sleep(delay)
+                continue
+
+            # Raise an error for unsuccessful responses and return parsed JSON.
+            response.raise_for_status()
+            return response.json()
+
+        raise RuntimeError("Weather request failed after retry.")
+
+    # Find the city's coordinates using Open-Meteo's geocoding service.
+    geocoding_url = "https://geocoding-api.open-meteo.com/v1/search"
+    geocoding_data = fetch_json(
         geocoding_url,
-        params={
+        {
             "name": city,
             "count": 1,
             "language": "en",
             "format": "json",
         },
-        timeout=15,
     )
-    geocoding_response.raise_for_status()
 
-    places = geocoding_response.json().get("results", [])
-
+    # Stop if the service cannot find a matching city.
+    places = geocoding_data.get("results", [])
     if not places:
         return None
 
+    # Extract the first matching city's name and coordinates.
     place = places[0]
     latitude = place["latitude"]
     longitude = place["longitude"]
 
+    # Request current weather conditions for the selected coordinates.
     weather_url = "https://api.open-meteo.com/v1/forecast"
-
-    weather_response = requests.get(
+    weather_data = fetch_json(
         weather_url,
-        params={
+        {
             "latitude": latitude,
             "longitude": longitude,
             "current": (
@@ -59,12 +108,12 @@ def get_weather(city):
             ),
             "timezone": "auto",
         },
-        timeout=15,
     )
-    weather_response.raise_for_status()
 
-    current = weather_response.json()["current"]
+    # Extract the current weather measurements from the API response.
+    current = weather_data["current"]
 
+    # Convert Open-Meteo weather codes into readable descriptions.
     weather_descriptions = {
         0: "clear sky",
         1: "mainly clear",
@@ -89,9 +138,13 @@ def get_weather(city):
         99: "thunderstorm with heavy hail",
     }
 
+    # Use a fallback description if a code is missing from the dictionary.
     code = current["weather_code"]
-    description = weather_descriptions.get(code, "conditions not classified")
+    description = weather_descriptions.get(
+        code, "conditions not classified"
+    )
 
+    # Combine the measurements into a concise summary for the AI prompt.
     weather_summary = (
         f"Weather in {place['name']}, {place.get('country', '')}: "
         f"{description}; "
@@ -101,31 +154,43 @@ def get_weather(city):
         f"wind speed {current['wind_speed_10m']} km/h."
     )
 
+    # Save successful results with a timestamp so they can be reused.
+    _weather_cache[cache_key] = {
+        "time": time.time(),
+        "summary": weather_summary,
+    }
+
     return weather_summary
 
 
 def generate_mission(location, time_available, energy, interests):
-    """Generate an outdoor mission using Gemini and current weather."""
+    """Generate a personalized outdoor mission using AI and current weather."""
 
+    # Require a city or area before making external requests.
     if not location or not location.strip():
         return "📍 Please enter your city or area first."
 
+    # Avoid an unnecessary request if the API key is missing.
     if client is None:
-        return "⚠️ OpenRouter API key is missing. Check your .env file."
+        return "⚠️ OpenRouter API key is missing. Check your configuration."
 
+    # Convert the selected interests into text for the AI prompt.
     selected_interests = (
         ", ".join(interests) if interests else "Anything outdoors"
     )
 
     try:
+        # Retrieve current conditions before asking the AI for a mission.
         weather = get_weather(location.strip())
 
+        # Explain how to correct the input if no matching city was found.
         if weather is None:
             return (
                 "📍 I couldn't find that city. "
                 "Please check the spelling and try again."
             )
 
+        # Give the AI the user's preferences, real weather, and safety rules.
         prompt = f"""
 You are TouchGrass AI, a friendly outdoor activity coach.
 
@@ -152,7 +217,7 @@ Instructions:
 - Never encourage users to go somewhere isolated or unsafe.
 """
 
-        
+        # Send the prompt to the selected model through OpenRouter.
         response = client.chat.completions.create(
             model=MODEL,
             messages=[
@@ -165,21 +230,32 @@ Instructions:
             max_tokens=400,
         )
 
+        # Extract the generated mission from the model's response.
         mission = response.choices[0].message.content
 
-
+        # Handle an empty AI response without displaying a blank result.
         if not mission:
             return "🌱 The AI returned no text. Please try again."
 
+        # Display the mission together with the weather information used.
         return f"{mission}\n\n---\n🌦️ **Weather used:** {weather}"
 
     except Exception as e:
+        # Print the underlying exception so it appears in Render's logs.
         print(f"Mission generation failed: {e!r}", flush=True)
         traceback.print_exc()
-        # Keep your existing return statement below
+
+        # Show a friendly message instead of leaving the output blank.
+        return (
+            "⚠️ I couldn't generate your mission. "
+            "Please try again in a moment."
+        )
 
 
+# Build the page and its input controls using Gradio Blocks.
 with gr.Blocks(title="TouchGrass AI") as demo:
+
+    # Introduce the app and explain what it does.
     gr.Markdown(
         """
         # 🌿 TouchGrass AI
@@ -190,23 +266,27 @@ with gr.Blocks(title="TouchGrass AI") as demo:
         """
     )
 
+    # Collect the city or area used for the weather lookup.
     location = gr.Textbox(
         label="📍 Your city or area",
         placeholder="e.g., Tunis",
     )
 
+    # Let users choose how long their outdoor activity can last.
     time_available = gr.Radio(
         choices=["10 minutes", "20 minutes", "30 minutes", "1 hour"],
         label="⏱️ How much time do you have?",
         value="20 minutes",
     )
 
+    # Let users select the amount of energy they have.
     energy = gr.Radio(
         choices=["Low", "Medium", "High"],
         label="⚡ What's your energy level?",
         value="Medium",
     )
 
+    # Allow users to select multiple activity interests.
     interests = gr.Dropdown(
         choices=[
             "Nature",
@@ -220,26 +300,33 @@ with gr.Blocks(title="TouchGrass AI") as demo:
         multiselect=True,
     )
 
+    # Create the button that starts mission generation.
     generate_button = gr.Button(
         "🌱 Generate my mission",
         variant="primary",
     )
 
+    # Display the generated mission as formatted Markdown.
     output = gr.Markdown()
 
+    # Pass the selected inputs to generate_mission when clicked.
     generate_button.click(
         fn=generate_mission,
         inputs=[location, time_available, energy, interests],
         outputs=output,
     )
 
+    # Credit the weather-data provider on the page.
     gr.Markdown(
         "Weather data provided by [Open-Meteo](https://open-meteo.com/)."
     )
 
 
 if __name__ == "__main__":
+    # Use localhost locally and Render's required network binding when deployed.
+    is_render = bool(os.environ.get("PORT"))
     demo.launch(
-        server_name="0.0.0.0",
+        server_name="0.0.0.0" if is_render else "127.0.0.1",
         server_port=int(os.environ.get("PORT", 7860)),
     )
+
